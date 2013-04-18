@@ -16,11 +16,15 @@ Window window;
 
 Layer moon_layer;
 Layer shadow_layer;
+Layer phase_layer;
 
-int radius  = 70;
+int radius  = 65;
 int border = 1;
 int centerx = 71;
-int centery = 167-70;
+int centery = 167-65;
+
+const char phases[8][20] = {"New Moon","Waxing Crescent","First Quarter","Waxing Gibbous","Full Moon","Waning Gibbous","Thrid Quarter","Waning Crescent"};
+
 
 bool leapYear(int year){
     if(year%400==0)
@@ -69,7 +73,22 @@ void moon_layer_update_callback(Layer *me, GContext* ctx) {
     graphics_context_set_fill_color(ctx, GColorWhite);
     graphics_fill_circle(ctx, GPoint(centerx,centery), radius);
 }
-
+void phase_layer_update_callback(Layer *me, GContext* ctx) {
+    (void)me;
+    
+    int p = floor(16.*(phasePercent()+0.0625));
+    p = (p % 16)/2;
+        
+    graphics_text_draw(
+        ctx, 
+        phases[p],  
+        fonts_get_system_font(FONT_KEY_GOTHIC_24), 
+        GRect(0, 0, 144, 30), 
+        GTextOverflowModeWordWrap, 
+        GTextAlignmentCenter, 
+        NULL);
+    
+}
 void shadow_layer_update_callback(Layer *me, GContext* ctx) {
     (void)me;
     
@@ -129,11 +148,16 @@ void handle_init(AppContextRef ctx) {
     layer_init(&shadow_layer, window.layer.frame);
     shadow_layer.update_proc = &shadow_layer_update_callback;
     layer_add_child(&window.layer, &shadow_layer);
+    
+    layer_init(&phase_layer, window.layer.frame);
+    phase_layer.update_proc = &phase_layer_update_callback;
+    layer_add_child(&window.layer, &phase_layer);
 }
 
 void day_tick(AppContextRef ctx, PebbleTickEvent *t) {
     (void)ctx;
     layer_mark_dirty(&shadow_layer);
+    layer_mark_dirty(&phase_layer);
 }
 
 void pbl_main(void *params) {
