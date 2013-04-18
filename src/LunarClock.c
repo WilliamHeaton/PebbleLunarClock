@@ -17,6 +17,7 @@ Window window;
 Layer moon_layer;
 Layer shadow_layer;
 Layer phase_layer;
+Layer second_layer;
 
 int radius  = 65;
 int border = 1;
@@ -66,6 +67,21 @@ char* intToStr(int val){
 		buf[i] = "0123456789"[val % 10];
 	
 	return &buf[i+1];
+}
+void second_layer_update_callback(Layer *me, GContext* ctx) {
+    (void)me;
+    PblTm currentTime;
+    get_time(&currentTime);
+    
+    
+    graphics_context_set_stroke_color(ctx, GColorBlack);
+    graphics_context_set_fill_color(ctx, GColorBlack);
+    graphics_context_set_text_color(ctx, GColorBlack);
+    
+//    graphics_draw_line(ctx, GPoint(centerx, centery), GPoint(centerx + off2*x, centery - y));
+    
+//    graphics_context_set_fill_color(ctx, GColorWhite);
+//    graphics_fill_circle(ctx, GPoint(centerx,centery), radius);
 }
 
 void moon_layer_update_callback(Layer *me, GContext* ctx) {
@@ -152,12 +168,24 @@ void handle_init(AppContextRef ctx) {
     layer_init(&phase_layer, window.layer.frame);
     phase_layer.update_proc = &phase_layer_update_callback;
     layer_add_child(&window.layer, &phase_layer);
+    
+    layer_init(&second_layer, window.layer.frame);
+    second_layer.update_proc = &second_layer_update_callback;
+    layer_add_child(&window.layer, &second_layer);
 }
 
-void day_tick(AppContextRef ctx, PebbleTickEvent *t) {
+void second_tick(AppContextRef ctx, PebbleTickEvent *t) {
     (void)ctx;
-    layer_mark_dirty(&shadow_layer);
-    layer_mark_dirty(&phase_layer);
+    
+    if (t->units_changed & DAY_UNIT) {
+        layer_mark_dirty(&shadow_layer);
+        layer_mark_dirty(&phase_layer);
+    }
+    if (t->units_changed & SECOND_UNIT) {
+        layer_mark_dirty(&second_layer);
+    }
+
+    
 }
 
 void pbl_main(void *params) {
@@ -165,8 +193,8 @@ void pbl_main(void *params) {
     .init_handler = &handle_init,
 
     .tick_info = {
-        .tick_handler = &day_tick,
-        .tick_units = DAY_UNIT
+        .tick_handler = &second_tick,
+        .tick_units = SECOND_UNIT
     }
   };
   app_event_loop(params, &handlers);
