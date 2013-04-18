@@ -1,0 +1,22 @@
+Calendar Watchface
+
+This is a Watchface for the Pebble Watch.  It shows a month view calendar of the current month.  See master branch for app version that uses up/down buttons to navigate to next/previous months.
+
+Near the top of calendarApp.c you will find the following flags for configuring the appearance of the calendar. 
+
+black:
+        true  = White text on Black Background
+        false = Black text on White Background
+
+grid:
+        true  = Draws horizontal and vertical lines between the rows and columns
+        false = Does not draw said lines
+
+invert
+        true  = Todays date will be larger & bold and the Text & Background colors will be inverted
+        false = Todays date will be larger & bold
+
+
+daysOfWeek
+        array that holds the text used for the column headings
+
