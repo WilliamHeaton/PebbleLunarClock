@@ -2,14 +2,14 @@
 #include "pebble_app.h"
 #include "pebble_fonts.h"
 #include <math.h>
-#include <float.h>
+#include "resource_ids.auto.h"
 
 
 #define MY_UUID { 0x01, 0x15, 0x7D, 0x68, 0xA7, 0xE3, 0x4F, 0x87, 0xAB, 0x2C, 0xBB, 0x79, 0x9F, 0x3E, 0x92, 0x9D }
 PBL_APP_INFO(MY_UUID,
-             "Lunar Clock", "William Heaton",
+             "Lunar Phase", "William Heaton",
              1, 0, /* App version */
-             DEFAULT_MENU_ICON,
+             RESOURCE_ID_IMAGE_MENU_ICON,
              APP_INFO_WATCH_FACE);
 
 Window window;
