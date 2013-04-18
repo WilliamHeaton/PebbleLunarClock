@@ -1,22 +1,14 @@
-Calendar Watchface
+LunarClock Watchface
 
-This is a Watchface for the Pebble Watch.  It shows a month view calendar of the current month.  See master branch for app version that uses up/down buttons to navigate to next/previous months.
-
-Near the top of calendarApp.c you will find the following flags for configuring the appearance of the calendar. 
-
-black:
-        true  = White text on Black Background
-        false = Black text on White Background
-
-grid:
-        true  = Draws horizontal and vertical lines between the rows and columns
-        false = Does not draw said lines
-
-invert
-        true  = Todays date will be larger & bold and the Text & Background colors will be inverted
-        false = Todays date will be larger & bold
+This is a Watchface for the Pebble Watch.  It shows an illustration of the current phase of the moon.
 
 
-daysOfWeek
-        array that holds the text used for the column headings
+Licence
 
+Copyright (C) 2013 William Heaton <William.G.Heaton@gmail.com>
+
+LunarClock Watchface for Pebble is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+
+LunarClock Watchface for Pebble is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with LunarClock Watchface for Pebble. If not, see http://www.gnu.org/licenses/.
