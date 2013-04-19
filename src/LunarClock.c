@@ -22,7 +22,7 @@ Layer minute_layer;
 Layer hour_layer;
 
 
-bool showSeconds = false;
+bool showSeconds = true;
 int timezone = -5;
 
 int radius  = 68;
@@ -342,9 +342,11 @@ void handle_init(AppContextRef ctx) {
     layer_add_child(&window.layer, &phase_layer);
     
     if(showSeconds){
+    
         layer_init(&second_layer, window.layer.frame);
         second_layer.update_proc = &second_layer_update_callback;
         layer_add_child(&window.layer, &second_layer);
+    
     }
     layer_init(&minute_layer, window.layer.frame);
     minute_layer.update_proc = &minute_layer_update_callback;
