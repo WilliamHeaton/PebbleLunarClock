@@ -68,20 +68,76 @@ char* intToStr(int val){
 	
 	return &buf[i+1];
 }
+
+
+
 void second_layer_update_callback(Layer *me, GContext* ctx) {
     (void)me;
     PblTm currentTime;
     get_time(&currentTime);
     
+    int cols[8][2] = 
+                        {{GColorWhite,GColorWhite},
+                        {GColorBlack,GColorWhite},
+                        {GColorBlack,GColorWhite},
+                        {GColorBlack,GColorWhite},
+                        {GColorBlack,GColorBlack},
+                        {GColorWhite,GColorBlack},
+                        {GColorWhite,GColorBlack},
+                        {GColorWhite,GColorBlack}};
     
-    graphics_context_set_stroke_color(ctx, GColorBlack);
+    int p = floor(16.*(phasePercent()+0.0625));
+    p = (p % 16)/2;
+        
+    int ox = -1;
+    int oy = 1;
+    int c1 = cols[p][0];
+    int c2 = cols[p][1];
+    
+    if(currentTime.tm_sec<15 || currentTime.tm_sec>45){
+        oy = -1;
+    }if(currentTime.tm_sec>30){
+        ox = 1;
+        c1 = cols[p][1];
+        c2 = cols[p][0];
+    }
+    
+    double c = cos_lookup(TRIG_MAX_ANGLE/-4.+TRIG_MAX_ANGLE * ((double)currentTime.tm_sec)/60.) / 65536.;
+    double s = sin_lookup(TRIG_MAX_ANGLE/-4.+TRIG_MAX_ANGLE * ((double)currentTime.tm_sec)/60.) / 65536.;
+    
+    if(c1!=c2){
+        graphics_context_set_stroke_color(ctx, c2);
+        
+        graphics_draw_line(
+            ctx, 
+            GPoint(centerx+ox, centery+oy), 
+            GPoint(
+                centerx + (c*radius*0.96)+ox, 
+                centery + (s*radius*0.96)+oy));
+    }
+    
+    graphics_context_set_stroke_color(ctx, c1);
+    graphics_draw_line(
+        ctx, 
+        GPoint(centerx, centery), 
+        GPoint(
+            centerx + (c*radius*0.96), 
+            centery + (s*radius*0.96)));
+    
     graphics_context_set_fill_color(ctx, GColorBlack);
-    graphics_context_set_text_color(ctx, GColorBlack);
+    graphics_fill_circle(ctx, GPoint(centerx + (c*radius*0.9),centery + (s*radius*0.9)), 3);
+    graphics_context_set_fill_color(ctx, GColorWhite);
+    graphics_fill_circle(ctx, GPoint(centerx + (c*radius*0.9),centery + (s*radius*0.9)), 2);
     
-//    graphics_draw_line(ctx, GPoint(centerx, centery), GPoint(centerx + off2*x, centery - y));
-    
-//    graphics_context_set_fill_color(ctx, GColorWhite);
-//    graphics_fill_circle(ctx, GPoint(centerx,centery), radius);
+    graphics_context_set_text_color(ctx, GColorWhite);
+    graphics_text_draw(
+        ctx, 
+        intToStr(currentTime.tm_sec),  
+        fonts_get_system_font(FONT_KEY_GOTHIC_24), 
+        GRect(0, 0, 30, 30), 
+        GTextOverflowModeWordWrap, 
+        GTextAlignmentCenter, 
+        NULL);
 }
 
 void moon_layer_update_callback(Layer *me, GContext* ctx) {
