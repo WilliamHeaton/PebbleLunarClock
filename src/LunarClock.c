@@ -21,10 +21,15 @@ Layer second_layer;
 Layer minute_layer;
 Layer hour_layer;
 
-int radius  = 65;
+
+bool showSeconds = false;
+int timezone = -5;
+
+int radius  = 68;
 int border = 1;
 int centerx = 71;
 int centery = 71;
+
 
 double secLen = 0.80;
 int    secRad = 3;
@@ -54,7 +59,7 @@ double daysSinceNewMoon( int year, int yday, int hour){
         if(leapYear(i))
             delta += 1;            
     }
-    return delta+hour/24.;
+    return delta+(hour+5+timezone)/24.;
 }
 
 double phase(){
@@ -336,10 +341,11 @@ void handle_init(AppContextRef ctx) {
     phase_layer.update_proc = &phase_layer_update_callback;
     layer_add_child(&window.layer, &phase_layer);
     
-    layer_init(&second_layer, window.layer.frame);
-    second_layer.update_proc = &second_layer_update_callback;
-    layer_add_child(&window.layer, &second_layer);
-    
+    if(showSeconds){
+        layer_init(&second_layer, window.layer.frame);
+        second_layer.update_proc = &second_layer_update_callback;
+        layer_add_child(&window.layer, &second_layer);
+    }
     layer_init(&minute_layer, window.layer.frame);
     minute_layer.update_proc = &minute_layer_update_callback;
     layer_add_child(&window.layer, &minute_layer);
@@ -356,7 +362,7 @@ void second_tick(AppContextRef ctx, PebbleTickEvent *t) {
         layer_mark_dirty(&shadow_layer);
         layer_mark_dirty(&phase_layer);
     }
-    if (t->units_changed & SECOND_UNIT) {
+    if (showSeconds && (t->units_changed & SECOND_UNIT)) {
         layer_mark_dirty(&second_layer);
     }
     if (t->units_changed & MINUTE_UNIT) {
@@ -368,12 +374,14 @@ void second_tick(AppContextRef ctx, PebbleTickEvent *t) {
 }
 
 void pbl_main(void *params) {
+    
+
   PebbleAppHandlers handlers = {
     .init_handler = &handle_init,
 
     .tick_info = {
         .tick_handler = &second_tick,
-        .tick_units = SECOND_UNIT
+        .tick_units = showSeconds?SECOND_UNIT:MINUTE_UNIT
     }
   };
   app_event_loop(params, &handlers);
