@@ -84,6 +84,16 @@ const int cols[8][3] =
                     {GColorWhite,GColorBlack},
                     {GColorWhite,GColorBlack}};
 
+const int cols2[8][2] = 
+                    {{GColorWhite,GColorBlack}, // NEW MOON
+                    {GColorWhite,GColorBlack},
+                    {GColorBlack,GColorWhite}, // Quarter
+                    {GColorBlack,GColorWhite},
+                    {GColorBlack,GColorWhite}, // FULL MOON
+                    {GColorBlack,GColorWhite},
+                    {GColorWhite,GColorBlack}, // Quarter
+                    {GColorWhite,GColorBlack}};
+                    
 void drawHand(Layer *me, GContext* ctx,double sec,int r,bool endCirc,bool startCirc){
     
     int c1 = cols[ph][sec>30?1:0];
@@ -126,9 +136,9 @@ void drawHand(Layer *me, GContext* ctx,double sec,int r,bool endCirc,bool startC
     }
     if(endCirc){
         double cc = r+secRad;
-        graphics_context_set_fill_color(ctx, cols[ph][0]);
+        graphics_context_set_fill_color(ctx, cols2[ph][0]);
         graphics_fill_circle(ctx, GPoint(centerx + c*cc,centery + s*cc), secRad);
-        graphics_context_set_fill_color(ctx, cols[ph][0]==GColorWhite?GColorBlack:GColorWhite);
+        graphics_context_set_fill_color(ctx, cols2[ph][1]);
         graphics_fill_circle(ctx, GPoint(centerx + c*cc,centery + s*cc), secRad-1);
     }
 }
