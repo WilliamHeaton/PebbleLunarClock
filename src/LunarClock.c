@@ -126,9 +126,9 @@ void drawHand(Layer *me, GContext* ctx,double sec,int r,bool endCirc,bool startC
     }
     if(endCirc){
         double cc = r+secRad;
-        graphics_context_set_fill_color(ctx, c1);
+        graphics_context_set_fill_color(ctx, cols[ph][0]);
         graphics_fill_circle(ctx, GPoint(centerx + c*cc,centery + s*cc), secRad);
-        graphics_context_set_fill_color(ctx, c3);
+        graphics_context_set_fill_color(ctx, cols[ph][0]==GColorWhite?GColorBlack:GColorWhite);
         graphics_fill_circle(ctx, GPoint(centerx + c*cc,centery + s*cc), secRad-1);
     }
 }
