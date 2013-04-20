@@ -129,16 +129,16 @@ void drawHand(Layer *me, GContext* ctx,double sec,int r,bool endCirc,bool startC
             centery + s*r));
     
     if(startCirc){
-        graphics_context_set_fill_color(ctx, c3);
-        graphics_fill_circle(ctx, GPoint(centerx,centery), 5);
-        graphics_context_set_fill_color(ctx, c1);
+        graphics_context_set_fill_color(ctx, cols2[ph][1]);
+        graphics_fill_circle(ctx, GPoint(centerx,centery), 6);
+        graphics_context_set_fill_color(ctx, cols2[ph][0]);
         graphics_fill_circle(ctx, GPoint(centerx,centery), 2);
     }
     if(endCirc){
         double cc = r+secRad;
-        graphics_context_set_fill_color(ctx, cols2[ph][1]);
+        graphics_context_set_fill_color(ctx, c1);
         graphics_fill_circle(ctx, GPoint(centerx + c*cc,centery + s*cc), secRad);
-        graphics_context_set_fill_color(ctx, cols2[ph][0]);
+        graphics_context_set_fill_color(ctx, c2);
         graphics_fill_circle(ctx, GPoint(centerx + c*cc,centery + s*cc), secRad-1);
     }
 }
@@ -216,7 +216,12 @@ void shadow_layer_update_callback(Layer *me, GContext* ctx) {
     graphics_draw_line(ctx, GPoint(centerx + off1*r, centery), GPoint((centerx + off2*r), centery));
 }
 
-
+void setPhase(double delta){
+    
+    phase = delta - 29.530588853 * floor(delta / 29.530588853);
+    phasePercent = phase/29.530588853;
+    ph = ((int)floor(16.*(phasePercent+0.09)) % 16)/2;
+}
 
 void handle_init(AppContextRef ctx) {
     (void)ctx;
@@ -227,10 +232,7 @@ void handle_init(AppContextRef ctx) {
     
     PblTm t;
     get_time(&t);
-    double delta = daysSinceNewMoon(t.tm_year+1900,t.tm_yday,t.tm_hour);
-    phase = delta - 29.530588853 * floor(delta / 29.530588853);
-    phasePercent = phase/29.530588853;
-    ph = ((int)floor(16.*(phasePercent+0.09)) % 16)/2;
+    setPhase(daysSinceNewMoon(t.tm_year+1900,t.tm_yday,t.tm_hour));
     
     curHour=t.tm_hour;
     curMin=t.tm_min;
@@ -280,11 +282,8 @@ void second_tick(AppContextRef ctx, PebbleTickEvent *t) {
         layer_mark_dirty(&hour_layer);
     }
     if (t->units_changed & HOUR_UNIT) {
-    
-        double delta = daysSinceNewMoon(t->tick_time->tm_year+1900,t->tick_time->tm_yday,t->tick_time->tm_hour);
-        phase = delta - 29.530588853 * floor(delta / 29.530588853);
-        phasePercent = phase/29.530588853;
-        ph = ((int)floor(16.*(phasePercent+0.09)) % 16)/2;
+        
+        setPhase(daysSinceNewMoon(t->tick_time->tm_year+1900,t->tick_time->tm_yday,t->tick_time->tm_hour));
         
         layer_mark_dirty(&shadow_layer);
         layer_mark_dirty(&phase_layer);
