@@ -1,19 +1,19 @@
 Lunar Phase Analog Clock
 
-This is a Watchface for the Pebble Watch.  It shows an illustration of the current phase of the moon.
+This is a Watchface for the Pebble Watch.  It is an analog clock which shows an illustration of moon phase in the background.
 
 The hour and minute hands are redrawn once per minute.
 
 The moon shadow is redrawn once per hour.
 
-The moon phase label is which ever of the following are closest:
+The moon phase label is whichever of the following are closest:
     New Moon, 
     Waxing Crescent,
     First Quarter,
     Waxing Gibbous,
     Full Moon,
     Waning Gibbous,
-    Thrid Quarter,
+    Third Quarter,
     Waning Crescent
 
 Licence
