@@ -14,7 +14,10 @@ PBL_APP_INFO(MY_UUID,
 
 Window window;
 
-bool showSeconds = true;
+bool showSeconds = false;
+bool showMinutes = true;
+bool showHours   = true; 
+
 int timezone = -5;
 
 int radius  = 68;
@@ -250,14 +253,16 @@ void handle_init(AppContextRef ctx) {
     phase_layer.update_proc = &phase_layer_update_callback;
     layer_add_child(&window.layer, &phase_layer);
     
-    layer_init(&hour_layer, window.layer.frame);
-    hour_layer.update_proc = &hour_layer_update_callback;
-    layer_add_child(&window.layer, &hour_layer);
-    
-    layer_init(&minute_layer, window.layer.frame);
-    minute_layer.update_proc = &minute_layer_update_callback;
-    layer_add_child(&window.layer, &minute_layer);
-    
+    if(showHours){
+        layer_init(&hour_layer, window.layer.frame);
+        hour_layer.update_proc = &hour_layer_update_callback;
+        layer_add_child(&window.layer, &hour_layer);
+    }
+    if(showMinutes){
+        layer_init(&minute_layer, window.layer.frame);
+        minute_layer.update_proc = &minute_layer_update_callback;
+        layer_add_child(&window.layer, &minute_layer);
+    }
     if(showSeconds){
         layer_init(&second_layer, window.layer.frame);
         second_layer.update_proc = &second_layer_update_callback;
@@ -277,7 +282,7 @@ void second_tick(AppContextRef ctx, PebbleTickEvent *t) {
     if (showSeconds && (t->units_changed & SECOND_UNIT)) {
         layer_mark_dirty(&second_layer);
     }
-    if (t->units_changed & MINUTE_UNIT) {
+    if (showMinutes && t->units_changed & MINUTE_UNIT) {
         layer_mark_dirty(&minute_layer);
         layer_mark_dirty(&hour_layer);
     }
@@ -285,21 +290,22 @@ void second_tick(AppContextRef ctx, PebbleTickEvent *t) {
         
         setPhase(daysSinceNewMoon(t->tick_time->tm_year+1900,t->tick_time->tm_yday,t->tick_time->tm_hour));
         
-        layer_mark_dirty(&shadow_layer);
-        layer_mark_dirty(&phase_layer);
+        if(showHours){
+            layer_mark_dirty(&shadow_layer);
+            layer_mark_dirty(&phase_layer);
+        }
     }
 }
 
 void pbl_main(void *params) {
-    
 
-  PebbleAppHandlers handlers = {
+    PebbleAppHandlers handlers = {
     .init_handler = &handle_init,
 
     .tick_info = {
         .tick_handler = &second_tick,
         .tick_units = showSeconds?SECOND_UNIT:MINUTE_UNIT
     }
-  };
-  app_event_loop(params, &handlers);
+    };
+    app_event_loop(params, &handlers);
 }
