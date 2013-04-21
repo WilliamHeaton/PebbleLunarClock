@@ -14,11 +14,10 @@ PBL_APP_INFO(MY_UUID,
 
 Window window;
 
-const bool showSeconds = false;
+const bool showSeconds = true;
 const bool showMinutes = true;
 const bool showHours   = true; 
 const bool showDetailedMoonGraphic = true;
-
 
 const int timezone = -5;
 
@@ -27,9 +26,7 @@ const int border = 1;
 const int centerx = 71;
 const int centery = 71;
 
-const double hourLen = 0.60;
-const double minLen  = 0.75;
-const double secLen  = 0.88;
+const double secLen  = 0.94;
 const int    secRad  = 3;
 
 const char phases[8][20] = {"New Moon","Waxing Crescent","First Quarter","Waxing Gibbous","Full Moon","Waning Gibbous","Third Quarter","Waning Crescent"};
@@ -47,6 +44,7 @@ Layer phase_layer;
 Layer second_layer;
 Layer minute_layer;
 Layer hour_layer;
+Layer top_layer;
 BmpContainer moonimage_container;
 
 bool leapYear(int year){
@@ -102,83 +100,78 @@ const int cols2[8][2] =
 
 GPath hour_hand;
 const GPathInfo hour_hand_info = {
-  5,
-  (GPoint []) {
+    5,
+    (GPoint []) {
     {-2, -7},
     { 2, -7},
     { 7, -12},
     { 0, -52},
     {-7, -12},
-  }
+    }
 };
 
 GPath minute_hand;
 const GPathInfo minute_hand_info = {
-  6,
-  (GPoint []) {
+    6,
+    (GPoint []) {
     {-4, -8},
     { 0, -7},
     { 4, -8},
     { 4, -30},
     { 0, -65},
     {-4, -30},
-  }
+    }
 };
-void drawHand(Layer *me, GContext* ctx,double sec,int r,bool endCirc,bool startCirc){
+void top_layer_update_callback(Layer *me, GContext* ctx) {
+    (void)me;
     
-    int c1 = cols[ph][sec>30?1:0];
-    int c2 = cols[ph][sec>30?0:1];
+    graphics_context_set_fill_color(ctx, cols2[ph][1]);
+    graphics_fill_circle(ctx, GPoint(centerx,centery), 5);
+    graphics_context_set_fill_color(ctx, cols2[ph][0]);
+    graphics_fill_circle(ctx, GPoint(centerx,centery), 2);
+}
+void second_layer_update_callback(Layer *me, GContext* ctx) {
+    (void)me;
+    
+    int r = radius*secLen;
+    
+    int c1 = cols[ph][curSec>30?1:0];
+    int c2 = cols[ph][curSec>30?0:1];
     int c3 = (c1==c2)?cols[ph][2]:c2;
     
     int ox = -1;
     int oy = 1;
-    if(sec>30){
+    if(curSec>30){
         ox = 1;
-    }if(sec<15 || sec>45){
+    }if(curSec<15 || curSec>45){
         oy = -1;
     }
     
-    double angle = TRIG_MAX_ANGLE/-4.+TRIG_MAX_ANGLE * sec/60.;
-    double c = cos_lookup(angle) / 65536.;
-    double s = sin_lookup(angle) / 65536.;
+    int angle = TRIG_MAX_ANGLE/-4+TRIG_MAX_ANGLE * curSec/60.;
+    double c = cos_lookup(angle) / 65536. * r;
+    double s = sin_lookup(angle) / 65536. * r;
     
     graphics_context_set_stroke_color(ctx, c3);
     graphics_draw_line(
         ctx, 
         GPoint(centerx+ox, centery+oy), 
         GPoint(
-            centerx + c*r+ox, 
-            centery + s*r+oy));
+            centerx + c + ox, 
+            centery + s + oy));
     
     graphics_context_set_stroke_color(ctx, c1);
     graphics_draw_line(
         ctx, 
         GPoint(centerx, centery), 
         GPoint(
-            centerx + c*r, 
-            centery + s*r));
+            centerx + c, 
+            centery + s));
     
-    if(startCirc){
-        graphics_context_set_fill_color(ctx, cols2[ph][1]);
-        graphics_fill_circle(ctx, GPoint(centerx,centery), 5);
-        graphics_context_set_fill_color(ctx, cols2[ph][0]);
-        graphics_fill_circle(ctx, GPoint(centerx,centery), 2);
-    }
-    if(endCirc){
-        double cc = r+secRad;
-        graphics_context_set_fill_color(ctx, showDetailedMoonGraphic?GColorWhite:c1);
-        graphics_fill_circle(ctx, GPoint(centerx + c*cc,centery + s*cc), secRad);
-        graphics_context_set_fill_color(ctx, showDetailedMoonGraphic?GColorBlack:c2);
-        graphics_fill_circle(ctx, GPoint(centerx + c*cc,centery + s*cc), secRad-1);
-    }
-}
-void second_layer_update_callback(Layer *me, GContext* ctx) {
-    (void)me;
+    graphics_context_set_fill_color(ctx, showDetailedMoonGraphic?GColorWhite:c1);
+    graphics_fill_circle(ctx, GPoint(centerx + c,centery + s), secRad);
     
-    
-    unsigned int angle = curSec * 6;
-    
-    drawHand(me, ctx, curSec, radius*secLen,true,true);
+    graphics_context_set_fill_color(ctx, showDetailedMoonGraphic?GColorBlack:c2);
+    graphics_fill_circle(ctx, GPoint(centerx + c,centery + s), secRad-1);
 }
 
 void minute_layer_update_callback(Layer *me, GContext* ctx) {
@@ -327,8 +320,9 @@ void handle_init(AppContextRef ctx) {
         second_layer.update_proc = &second_layer_update_callback;
         layer_add_child(&window.layer, &second_layer);
     }
-    
-    
+    layer_init(&top_layer, window.layer.frame);
+    top_layer.update_proc = &top_layer_update_callback;
+    layer_add_child(&window.layer, &top_layer);
 }
 
 void second_tick(AppContextRef ctx, PebbleTickEvent *t) {
@@ -359,13 +353,12 @@ void second_tick(AppContextRef ctx, PebbleTickEvent *t) {
 void pbl_main(void *params) {
 
     PebbleAppHandlers handlers = {
-    .init_handler = &handle_init,
-    .deinit_handler = &handle_deinit,
-
-    .tick_info = {
-        .tick_handler = &second_tick,
-        .tick_units = showSeconds?SECOND_UNIT:MINUTE_UNIT
-    }
+        .init_handler = &handle_init,
+        .deinit_handler = &handle_deinit,
+        .tick_info = {
+            .tick_handler = &second_tick,
+            .tick_units = showSeconds?SECOND_UNIT:MINUTE_UNIT
+        }
     };
     app_event_loop(params, &handlers);
 }
