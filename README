@@ -6,7 +6,7 @@ The hour and minute hands are redrawn once per minute.
 
 The moon shadow is redrawn once per hour.
 
-The moon phase label is whichever of the following are closest:
+The moon phase label is whichever of the following is closest:
     New Moon, 
     Waxing Crescent,
     First Quarter,
@@ -16,9 +16,15 @@ The moon phase label is whichever of the following are closest:
     Third Quarter,
     Waning Crescent
 
+
+Thankyou to dhein for providing the detailed moon graphic.
+http://forums.getpebble.com/profile/10539/dhein
+
+
 Licence
 
 Copyright (C) 2013 William Heaton <William.G.Heaton@gmail.com>
+
 
 Lunar Phase Analog Clock is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 

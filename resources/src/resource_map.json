@@ -1,12 +1,18 @@
 
-{"friendlyVersion": "VERSION",
- "versionDefName": "VERSION",
+{"friendlyVersion": "LunarClock",
+ "versionDefName": "LUNARCLOCK_IMAGE_RESOURCES",
  "media": [
 
 	    {
             "type": "png",
             "defName": "IMAGE_MENU_ICON",
             "file": "images/menu_icon_moon.png"
+	    },
+	    
+	    {
+            "type": "png",
+            "defName": "IMAGE_MOON",
+            "file": "images/MoonDither.png"
 	    }
 	  ]
 }

@@ -15,8 +15,10 @@ PBL_APP_INFO(MY_UUID,
 Window window;
 
 bool showSeconds = false;
-bool showMinutes = true;
-bool showHours   = true; 
+bool showMinutes = false;
+bool showHours   = false; 
+bool showDetailedMoonGraphic = true;
+
 
 int timezone = -5;
 
@@ -45,7 +47,7 @@ Layer phase_layer;
 Layer second_layer;
 Layer minute_layer;
 Layer hour_layer;
-
+BmpContainer moonimage_container;
 
 bool leapYear(int year){
     if(year%400==0)
@@ -220,19 +222,22 @@ void shadow_layer_update_callback(Layer *me, GContext* ctx) {
 }
 
 void setPhase(double delta){
-    
     phase = delta - 29.530588853 * floor(delta / 29.530588853);
     phasePercent = phase/29.530588853;
     ph = ((int)floor(16.*(phasePercent+0.09)) % 16)/2;
 }
 
+void handle_deinit(AppContextRef ctx) {
+  (void)ctx;
+  bmp_deinit_container(&moonimage_container);
+}
 void handle_init(AppContextRef ctx) {
     (void)ctx;
 
     window_init(&window, "Watchface");
     window_stack_push(&window, true /* Animated */);
     window_set_background_color(&window, GColorBlack);
-    
+        
     PblTm t;
     get_time(&t);
     setPhase(daysSinceNewMoon(t.tm_year+1900,t.tm_yday,t.tm_hour));
@@ -241,10 +246,16 @@ void handle_init(AppContextRef ctx) {
     curMin=t.tm_min;
     curSec=t.tm_sec;
     
-    layer_init(&moon_layer, window.layer.frame);
-    moon_layer.update_proc = &moon_layer_update_callback;
-    layer_add_child(&window.layer, &moon_layer);
-    
+    if(showDetailedMoonGraphic){
+        
+        resource_init_current_app(&LUNARCLOCK_IMAGE_RESOURCES);
+        bmp_init_container(RESOURCE_ID_IMAGE_MOON, &moonimage_container);
+        layer_add_child(&window.layer, &moonimage_container.layer.layer);
+    }else{
+        layer_init(&moon_layer, window.layer.frame);
+        moon_layer.update_proc = &moon_layer_update_callback;
+        layer_add_child(&window.layer, &moon_layer);
+    }
     layer_init(&shadow_layer, window.layer.frame);
     shadow_layer.update_proc = &shadow_layer_update_callback;
     layer_add_child(&window.layer, &shadow_layer);
@@ -301,6 +312,7 @@ void pbl_main(void *params) {
 
     PebbleAppHandlers handlers = {
     .init_handler = &handle_init,
+    .deinit_handler = &handle_deinit,
 
     .tick_info = {
         .tick_handler = &second_tick,
