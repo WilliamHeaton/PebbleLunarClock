@@ -17,7 +17,7 @@ Window window;
 const bool showSeconds = true;
 const bool showMinutes = true;
 const bool showHours   = true; 
-const bool showDetailedMoonGraphic = false;
+const bool showDetailedMoonGraphic = true;
 
 
 const int timezone = -5;
@@ -99,6 +99,30 @@ const int cols2[8][2] =
                     {GColorWhite,GColorBlack}, // Quarter
                     {GColorWhite,GColorBlack}};
                     
+
+GPath hour_hand;
+const GPathInfo hour_hand_info = {
+  5,
+  (GPoint []) {
+    {-2, -5},
+    { 2, -5},
+    { 7, -12},
+    { 0, -52},
+    {-7, -12},
+  }
+};
+
+GPath minute_hand;
+const GPathInfo minute_hand_info = {
+  5,
+  (GPoint []) {
+    {-4, -5},
+    { 4, -5},
+    { 4, -30},
+    { 0, -65},
+    {-4, -30},
+  }
+};
 void drawHand(Layer *me, GContext* ctx,double sec,int r,bool endCirc,bool startCirc){
     
     int c1 = cols[ph][sec>30?1:0];
@@ -141,24 +165,40 @@ void drawHand(Layer *me, GContext* ctx,double sec,int r,bool endCirc,bool startC
     }
     if(endCirc){
         double cc = r+secRad;
-        graphics_context_set_fill_color(ctx, c1);
+        graphics_context_set_fill_color(ctx, showDetailedMoonGraphic?GColorWhite:c1);
         graphics_fill_circle(ctx, GPoint(centerx + c*cc,centery + s*cc), secRad);
-        graphics_context_set_fill_color(ctx, c2);
+        graphics_context_set_fill_color(ctx, showDetailedMoonGraphic?GColorBlack:c2);
         graphics_fill_circle(ctx, GPoint(centerx + c*cc,centery + s*cc), secRad-1);
     }
 }
 void second_layer_update_callback(Layer *me, GContext* ctx) {
     (void)me;
+    
+    
+    unsigned int angle = curSec * 6;
+    
     drawHand(me, ctx, curSec, radius*secLen,true,true);
 }
 
 void minute_layer_update_callback(Layer *me, GContext* ctx) {
     (void)me;
-    drawHand(me, ctx, curMin, radius*minLen,false,false);
+    
+    gpath_rotate_to(&minute_hand, (TRIG_MAX_ANGLE / 360) * curMin * 6);
+
+    graphics_context_set_stroke_color(ctx, GColorWhite);
+    graphics_context_set_fill_color(ctx, GColorBlack);
+    gpath_draw_filled(ctx, &minute_hand);
+    gpath_draw_outline(ctx, &minute_hand);
 }
 void hour_layer_update_callback(Layer *me, GContext* ctx) {
     (void)me;
-    drawHand(me, ctx, ((curHour%12)+curMin/60.)*60./12., radius*hourLen,false,false);
+    
+    gpath_rotate_to(&hour_hand, (TRIG_MAX_ANGLE / 360) * (curHour * 30 + curMin / 2));
+
+    graphics_context_set_stroke_color(ctx, GColorWhite);
+    graphics_context_set_fill_color(ctx, GColorBlack);
+    gpath_draw_filled(ctx, &hour_hand);
+    gpath_draw_outline(ctx, &hour_hand);
 }
 void moon_layer_update_callback(Layer *me, GContext* ctx) {
     (void)me;
@@ -222,6 +262,7 @@ void shadow_layer_update_callback(Layer *me, GContext* ctx) {
 }
 
 void setPhase(double delta){
+//delta = 29;
     phase = delta - 29.530588853 * floor(delta / 29.530588853);
     phasePercent = phase/29.530588853;
     ph = ((int)floor(16.*(phasePercent+0.09)) % 16)/2;
@@ -268,11 +309,18 @@ void handle_init(AppContextRef ctx) {
         layer_init(&hour_layer, window.layer.frame);
         hour_layer.update_proc = &hour_layer_update_callback;
         layer_add_child(&window.layer, &hour_layer);
+        
+        gpath_init(&hour_hand, &hour_hand_info);
+        gpath_move_to(&hour_hand, GPoint(centerx, centery));
+        
     }
     if(showMinutes){
         layer_init(&minute_layer, window.layer.frame);
         minute_layer.update_proc = &minute_layer_update_callback;
         layer_add_child(&window.layer, &minute_layer);
+        
+        gpath_init(&minute_hand, &minute_hand_info);
+        gpath_move_to(&minute_hand, GPoint(centerx, centery));
     }
     if(showSeconds){
         layer_init(&second_layer, window.layer.frame);
