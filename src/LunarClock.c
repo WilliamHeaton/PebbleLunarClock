@@ -14,23 +14,23 @@ PBL_APP_INFO(MY_UUID,
 
 Window window;
 
-bool showSeconds = false;
-bool showMinutes = false;
-bool showHours   = false; 
-bool showDetailedMoonGraphic = true;
+const bool showSeconds = true;
+const bool showMinutes = true;
+const bool showHours   = true; 
+const bool showDetailedMoonGraphic = false;
 
 
-int timezone = -5;
+const int timezone = -5;
 
-int radius  = 68;
-int border = 1;
-int centerx = 71;
-int centery = 71;
+const int radius  = 68;
+const int border = 1;
+const int centerx = 71;
+const int centery = 71;
 
-double hourLen = 0.60;
-double minLen  = 0.75;
-double secLen  = 0.88;
-int    secRad  = 3;
+const double hourLen = 0.60;
+const double minLen  = 0.75;
+const double secLen  = 0.88;
+const int    secRad  = 3;
 
 const char phases[8][20] = {"New Moon","Waxing Crescent","First Quarter","Waxing Gibbous","Full Moon","Waning Gibbous","Third Quarter","Waning Crescent"};
 
