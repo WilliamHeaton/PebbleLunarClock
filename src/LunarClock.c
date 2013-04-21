@@ -14,7 +14,7 @@ PBL_APP_INFO(MY_UUID,
 
 Window window;
 
-const bool showSeconds = true;
+const bool showSeconds = false;
 const bool showMinutes = true;
 const bool showHours   = true; 
 const bool showDetailedMoonGraphic = true;
@@ -60,7 +60,7 @@ bool leapYear(int year){
         return false;
 }
 double daysSinceNewMoon( int year, int yday, int hour){
-     
+    
     double delta = -14.01+yday;
     for(int i = 2010; i<year; i++){
         delta += 365;
@@ -104,8 +104,8 @@ GPath hour_hand;
 const GPathInfo hour_hand_info = {
   5,
   (GPoint []) {
-    {-2, -5},
-    { 2, -5},
+    {-2, -7},
+    { 2, -7},
     { 7, -12},
     { 0, -52},
     {-7, -12},
@@ -114,10 +114,11 @@ const GPathInfo hour_hand_info = {
 
 GPath minute_hand;
 const GPathInfo minute_hand_info = {
-  5,
+  6,
   (GPoint []) {
-    {-4, -5},
-    { 4, -5},
+    {-4, -8},
+    { 0, -7},
+    { 4, -8},
     { 4, -30},
     { 0, -65},
     {-4, -30},
@@ -159,7 +160,7 @@ void drawHand(Layer *me, GContext* ctx,double sec,int r,bool endCirc,bool startC
     
     if(startCirc){
         graphics_context_set_fill_color(ctx, cols2[ph][1]);
-        graphics_fill_circle(ctx, GPoint(centerx,centery), 6);
+        graphics_fill_circle(ctx, GPoint(centerx,centery), 5);
         graphics_context_set_fill_color(ctx, cols2[ph][0]);
         graphics_fill_circle(ctx, GPoint(centerx,centery), 2);
     }
@@ -262,7 +263,6 @@ void shadow_layer_update_callback(Layer *me, GContext* ctx) {
 }
 
 void setPhase(double delta){
-//delta = 29;
     phase = delta - 29.530588853 * floor(delta / 29.530588853);
     phasePercent = phase/29.530588853;
     ph = ((int)floor(16.*(phasePercent+0.09)) % 16)/2;
