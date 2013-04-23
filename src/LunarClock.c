@@ -18,6 +18,10 @@ const bool showSeconds = true;
 const bool showMinutes = true;
 const bool showHours   = true; 
 const bool showDetailedMoonGraphic = true;
+const bool showAnimation = true;
+
+const int animationSpeed = 35;
+const double animationStep = 0.08;
 
 const int timezone = -5;
 
@@ -32,11 +36,13 @@ const int    secRad  = 3;
 const char phases[8][20] = {"New Moon","Waxing Crescent","First Quarter","Waxing Gibbous","Full Moon","Waning Gibbous","Third Quarter","Waning Crescent"};
 
 int ph;
+const double phaseLength = 29.530588853;
 double phase;
 double phasePercent;
 int curHour;
 int curMin;
 int curSec;
+int animationCount = 0;
 
 Layer moon_layer;
 Layer shadow_layer;
@@ -46,6 +52,8 @@ Layer minute_layer;
 Layer hour_layer;
 Layer top_layer;
 BmpContainer moonimage_container;
+
+AppTimerHandle timer_handle;
 
 bool leapYear(int year){
     if(year%400==0)
@@ -66,15 +74,6 @@ double daysSinceNewMoon( int year, int yday, int hour){
             delta += 1;            
     }
     return delta+(hour+5+timezone)/24.;
-}
-
-char* intToStr(int val){
- 	static char buf[32] = {0};
-	int i = 30;	
-	for(; val && i ; --i, val /= 10)
-		buf[i] = "0123456789"[val % 10];
-	
-	return &buf[i+1];
 }
 
 const int cols[8][3] = 
@@ -129,10 +128,10 @@ void top_layer_update_callback(Layer *me, GContext* ctx) {
     graphics_fill_circle(ctx, GPoint(centerx,centery), 5);
     graphics_context_set_fill_color(ctx, cols2[ph][0]);
     graphics_fill_circle(ctx, GPoint(centerx,centery), 2);
+
 }
 void second_layer_update_callback(Layer *me, GContext* ctx) {
     (void)me;
-    
     int r = radius*secLen;
     
     int c1 = cols[ph][curSec>30?1:0];
@@ -148,30 +147,30 @@ void second_layer_update_callback(Layer *me, GContext* ctx) {
     }
     
     int angle = TRIG_MAX_ANGLE/-4+TRIG_MAX_ANGLE * curSec/60.;
-    double c = cos_lookup(angle) / 65536. * r;
-    double s = sin_lookup(angle) / 65536. * r;
+    double x = cos_lookup(angle) / 65536. * r;
+    double y = sin_lookup(angle) / 65536. * r;
     
     graphics_context_set_stroke_color(ctx, c3);
     graphics_draw_line(
         ctx, 
         GPoint(centerx+ox, centery+oy), 
         GPoint(
-            centerx + c + ox, 
-            centery + s + oy));
+            centerx + x + ox, 
+            centery + y + oy));
     
     graphics_context_set_stroke_color(ctx, c1);
     graphics_draw_line(
         ctx, 
         GPoint(centerx, centery), 
         GPoint(
-            centerx + c, 
-            centery + s));
+            centerx + x, 
+            centery + y));
     
     graphics_context_set_fill_color(ctx, showDetailedMoonGraphic?GColorWhite:c1);
-    graphics_fill_circle(ctx, GPoint(centerx + c,centery + s), secRad);
+    graphics_fill_circle(ctx, GPoint(centerx + x,centery + y), secRad);
     
     graphics_context_set_fill_color(ctx, showDetailedMoonGraphic?GColorBlack:c2);
-    graphics_fill_circle(ctx, GPoint(centerx + c,centery + s), secRad-1);
+    graphics_fill_circle(ctx, GPoint(centerx + x,centery + y), secRad-1);
 }
 
 void minute_layer_update_callback(Layer *me, GContext* ctx) {
@@ -183,6 +182,7 @@ void minute_layer_update_callback(Layer *me, GContext* ctx) {
     graphics_context_set_fill_color(ctx, GColorBlack);
     gpath_draw_filled(ctx, &minute_hand);
     gpath_draw_outline(ctx, &minute_hand);
+
 }
 void hour_layer_update_callback(Layer *me, GContext* ctx) {
     (void)me;
@@ -193,6 +193,7 @@ void hour_layer_update_callback(Layer *me, GContext* ctx) {
     graphics_context_set_fill_color(ctx, GColorBlack);
     gpath_draw_filled(ctx, &hour_hand);
     gpath_draw_outline(ctx, &hour_hand);
+
 }
 void moon_layer_update_callback(Layer *me, GContext* ctx) {
     (void)me;
@@ -211,6 +212,7 @@ void phase_layer_update_callback(Layer *me, GContext* ctx) {
         GTextOverflowModeWordWrap, 
         GTextAlignmentCenter, 
         NULL);
+    
 }
 void shadow_layer_update_callback(Layer *me, GContext* ctx) {
     (void)me;
@@ -236,7 +238,7 @@ void shadow_layer_update_callback(Layer *me, GContext* ctx) {
     int ddF_y = -2 * r;
     int x = 0;
     int y = r;
-    
+    int ox1,ox2,oy1,oy2;
     while(x < y){
         if(f >= 0) {
             y--;
@@ -246,20 +248,72 @@ void shadow_layer_update_callback(Layer *me, GContext* ctx) {
         x++;
         ddF_x += 2;
         f += ddF_x;  
-        
-        graphics_draw_line(ctx, GPoint(centerx + off1*x, centery + y), GPoint(centerx + off2*x, centery + y));
-        graphics_draw_line(ctx, GPoint(centerx + off1*x, centery - y), GPoint(centerx + off2*x, centery - y));
-        graphics_draw_line(ctx, GPoint(centerx + off1*y, centery + x), GPoint(centerx + off2*y, centery + x));
-        graphics_draw_line(ctx, GPoint(centerx + off1*y, centery - x), GPoint(centerx + off2*y, centery - x));
+        ox1 = off1*x;
+        oy1 = off1*y;
+        ox2 = off2*x;
+        oy2 = off2*y;
+        graphics_draw_line(ctx, GPoint(centerx + ox1, centery + y), GPoint(centerx + ox2, centery + y));
+        graphics_draw_line(ctx, GPoint(centerx + ox1, centery - y), GPoint(centerx + ox2, centery - y));
+        graphics_draw_line(ctx, GPoint(centerx + oy1, centery + x), GPoint(centerx + oy2, centery + x));
+        graphics_draw_line(ctx, GPoint(centerx + oy1, centery - x), GPoint(centerx + oy2, centery - x));
     }
     graphics_draw_line(ctx, GPoint(centerx + off1*r, centery), GPoint((centerx + off2*r), centery));
 }
 
 void setPhase(double delta){
-    phase = delta - 29.530588853 * floor(delta / 29.530588853);
-    phasePercent = phase/29.530588853;
-    ph = ((int)floor(16.*(phasePercent+0.09)) % 16)/2;
+    phase = delta - phaseLength * floor(delta / phaseLength);
+    phasePercent = phase/phaseLength;
+    
+    double p = phasePercent * 200;
+    double d = 100/phaseLength;
+    
+    if(     p<   0.+d 
+         || p> 200.-d)
+        ph = 0;
+    else if(p<= 50.-d)
+        ph = 1;
+    else if(p<  50.+d)
+        ph = 2;
+    else if(p<=100.-d)
+        ph = 3;
+    else if(p< 100.+d)
+        ph = 4;
+    else if(p<=150.-d)
+        ph = 5;
+    else if(p< 150.+d)
+        ph = 6;
+    else
+        ph = 7;
 }
+void animate_moon(AppContextRef ctx, AppTimerHandle handle, uint32_t cookie) {
+    (void)ctx;
+    (void)handle;
+    animationCount++;
+    
+    if(animationCount*animationStep <= 1 ){
+        phasePercent += animationStep;
+        if(phasePercent>=1)phasePercent--;
+        layer_mark_dirty(&shadow_layer);
+        timer_handle = app_timer_send_event(ctx, animationSpeed, 1);
+    }
+    else{
+        PblTm t;
+        get_time(&t);
+        setPhase(daysSinceNewMoon(t.tm_year+1900,t.tm_yday,t.tm_hour));
+        
+        curHour=t.tm_hour;
+        curMin=t.tm_min;
+        curSec=t.tm_sec;
+        layer_mark_dirty(&shadow_layer);
+        layer_mark_dirty(&phase_layer);
+        if(showHours){
+            layer_mark_dirty(&hour_layer);
+            layer_mark_dirty(&minute_layer);
+            layer_mark_dirty(&top_layer);
+        }
+    }
+}
+
 
 void handle_deinit(AppContextRef ctx) {
   (void)ctx;
@@ -269,7 +323,7 @@ void handle_init(AppContextRef ctx) {
     (void)ctx;
 
     window_init(&window, "Watchface");
-    window_stack_push(&window, true /* Animated */);
+    window_stack_push(&window, false /* Animated */);
     window_set_background_color(&window, GColorBlack);
         
     PblTm t;
@@ -320,9 +374,13 @@ void handle_init(AppContextRef ctx) {
         second_layer.update_proc = &second_layer_update_callback;
         layer_add_child(&window.layer, &second_layer);
     }
-    layer_init(&top_layer, window.layer.frame);
-    top_layer.update_proc = &top_layer_update_callback;
-    layer_add_child(&window.layer, &top_layer);
+    if(showHours){
+        layer_init(&top_layer, window.layer.frame);
+        top_layer.update_proc = &top_layer_update_callback;
+        layer_add_child(&window.layer, &top_layer);
+    }
+    if(showAnimation)
+        timer_handle = app_timer_send_event(ctx, animationSpeed, 1);
 }
 
 void second_tick(AppContextRef ctx, PebbleTickEvent *t) {
@@ -343,9 +401,11 @@ void second_tick(AppContextRef ctx, PebbleTickEvent *t) {
         
         setPhase(daysSinceNewMoon(t->tick_time->tm_year+1900,t->tick_time->tm_yday,t->tick_time->tm_hour));
         
+        layer_mark_dirty(&shadow_layer);
+        layer_mark_dirty(&phase_layer);
+        
         if(showHours){
-            layer_mark_dirty(&shadow_layer);
-            layer_mark_dirty(&phase_layer);
+            layer_mark_dirty(&top_layer);
         }
     }
 }
@@ -355,6 +415,7 @@ void pbl_main(void *params) {
     PebbleAppHandlers handlers = {
         .init_handler = &handle_init,
         .deinit_handler = &handle_deinit,
+        .timer_handler = &animate_moon,
         .tick_info = {
             .tick_handler = &second_tick,
             .tick_units = showSeconds?SECOND_UNIT:MINUTE_UNIT
